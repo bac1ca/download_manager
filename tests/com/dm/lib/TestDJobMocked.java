@@ -11,13 +11,12 @@ import java.util.concurrent.Executors;
 
 import com.dm.lib.DJobBase.State;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 public class TestDJobMocked {
 
     @org.junit.Test
-    public void testDownloadTask1() throws Exception {
+    public void testDownloadTask() throws Exception {
         byte[] data = {
                 1, 2, 3, 4, 5, 6, 7, 8,
                 1, 2, 3, 4, 5, 6, 7, 8,
@@ -43,6 +42,29 @@ public class TestDJobMocked {
             } else if (state == State.FAILED) {
                 assertNotNull(djob.getStatus().getError());
             }
+        } finally {
+            executor.shutdown();
+        }
+    }
+
+    @org.junit.Test
+    public void testDownloadTaskStatus() throws Exception {
+        final byte[] data = { 1, 2, 3, 4, 5, 6, 7, 8};
+        final InputStream src = new ByteArrayInputStream(data);
+        final FileChannelMock dst = new FileChannelPosMock(data.length);
+
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        try {
+            DJobBase job = new DJobBase(src, dst, -1, executor);
+            assertEquals(State.INPROGRESS, job.getStatus().getState());
+
+            assertTrue(job.process());
+            assertEquals(State.INPROGRESS, job.getStatus().getState());
+
+            job.cancel();
+            assertFalse(job.process());
+            assertEquals(State.CANCELED, job.getStatus().getState());
+            assertNull(job.getStatus().getError());
         } finally {
             executor.shutdown();
         }

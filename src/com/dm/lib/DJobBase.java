@@ -30,7 +30,6 @@ public class DJobBase {
 
     boolean process() {
         if (isTerminated) {
-            finish(State.CANCELED, null);
             return false;
         }
 
@@ -42,6 +41,7 @@ public class DJobBase {
                     return false;
                 }
                 progress += readBytes;
+                if (listener != null) listener.notify(status, getProgress());
 
             } catch (InterruptedException | ExecutionException e) {
                 finish(State.FAILED, e);
@@ -89,23 +89,34 @@ public class DJobBase {
      * @return
      */
     public double getProgress() {
-        return progress / contentLen;
+        return (double) progress / contentLen;
     }
 
     public void cancel() {
         isTerminated = true;
+        finish(State.CANCELED, null);
     }
 
-
-    public void waitForFinish() {
+    public Status waitForFinish() {
         // TODO
+        return null;
     }
 
-    //public setOnComplete() {}
-    //public setProgressListener
+    public interface StatusListener {
+        void notify(Status status, double progress);
+    }
+
+    private volatile StatusListener listener;
+
+    public void setStatusListener(StatusListener listener) {
+        this.listener = listener;
+    }
 
     protected void finish(State state, Exception error) {
         status = new Status(state, error);
+        try {
+            src.close();
+        } catch (IOException ignore) {}
         try {
             dst.close();
         } catch (IOException ignore) {}
