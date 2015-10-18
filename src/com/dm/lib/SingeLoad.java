@@ -10,11 +10,18 @@ import java.util.concurrent.ExecutorService;
 import static java.nio.file.StandardOpenOption.CREATE;
 import static java.nio.file.StandardOpenOption.WRITE;
 
-public class DJob extends DJobBase {
+import com.dm.lib.Download.State;
+
+/**
+ * This class extends {@see SingleLoadBase}, applies destination path
+ * parameter, overrides {@see finish} method: destination file will
+ * be removed if task status is FAILED
+ */
+class SingeLoad extends SingleLoadBase {
 
     private final Path dst;
 
-    DJob(InputStream src, Path dst, long contentLen, ExecutorService executor)
+    SingeLoad(InputStream src, Path dst, long contentLen, ExecutorService executor)
             throws IOException {
         super(src, FileChannel.open(dst, CREATE, WRITE), contentLen, executor);
         this.dst = dst;

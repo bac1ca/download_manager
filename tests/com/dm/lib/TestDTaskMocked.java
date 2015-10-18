@@ -17,7 +17,7 @@ public class TestDTaskMocked {
         InputStream src = new ByteArrayInputStream(data);
         FileChannelMock dst = new FileChannelPosMock(data.length);
 
-        final DTask task = new DTask(src, dst);
+        final DownloadTask task = new DownloadTask(src, dst);
         int readBytes = task.call();
         assertEquals(data.length, readBytes);
         assertArrayEquals(data, dst.data());
@@ -30,7 +30,7 @@ public class TestDTaskMocked {
         FileChannelMock dst = new FileChannelPosMock(data.length);
 
         final int bufSize = 6;
-        final DTask task = new DTask(src, dst, bufSize);
+        final DownloadTask task = new DownloadTask(src, dst, bufSize);
         int readBytes = task.call();
         assertEquals(bufSize, readBytes);
 

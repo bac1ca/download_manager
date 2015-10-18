@@ -7,7 +7,11 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
-public class DJobBase {
+import com.dm.lib.Download.State;
+import com.dm.lib.Download.Status;
+import com.dm.lib.Download.StatusListener;
+
+class SingleLoadBase {
     private final InputStream src;
     private final FileChannel dst;
     private final long contentLen;
@@ -17,8 +21,8 @@ public class DJobBase {
     private volatile boolean isTerminated = false;
     private volatile Status status = new Status(State.INPROGRESS, null);
 
-    DJobBase(InputStream src, FileChannel dst, long contentLen,
-             ExecutorService executor) {
+    SingleLoadBase(InputStream src, FileChannel dst, long contentLen,
+                   ExecutorService executor) {
         this.src = src;
         this.dst = dst;
         this.executor = executor;
@@ -27,6 +31,8 @@ public class DJobBase {
             System.out.println("warn: content-contentLen = " + contentLen);
         }
     }
+
+    private Future<Integer> future;
 
     boolean process() {
         if (isTerminated) {
@@ -48,46 +54,10 @@ public class DJobBase {
                 return false;
             }
         }
-        future = executor.submit(new DTask(src, dst));
+        future = executor.submit(new DownloadTask(src, dst));
         return true;
     }
-    private Future<Integer> future;
 
-
-    public enum State {
-        INPROGRESS,
-        COMPLETED,
-        CANCELED,
-        FAILED,
-    }
-
-    public class Status {
-
-        private final State state;
-        private final Exception error;
-
-        private Status(State state, Exception error) {
-            this.state = state;
-            this.error = error;
-        }
-
-        public State getState() {
-            return state;
-        }
-
-        public Exception getError() {
-            return error;
-        }
-
-        @Override
-        public String toString() {
-            String res = state.toString();
-            if (error != null) {
-                res += error.getMessage();
-            }
-            return res;
-        }
-    }
 
     public Status getStatus() {
         return status;
@@ -98,8 +68,7 @@ public class DJobBase {
     }
 
     /**
-     * Returns Download Job progress [0.0, 1.0]; TODO description (< 0)
-     * @return
+     * @see Download#getProgress()
      */
     public double getProgress() {
         return (double) progress / contentLen;
@@ -120,9 +89,6 @@ public class DJobBase {
         return status;
     }
 
-    public interface StatusListener {
-        void notify(Status status, double progress);
-    }
 
     private volatile StatusListener listener;
 
@@ -132,6 +98,8 @@ public class DJobBase {
 
     protected void finish(State state, Exception error) {
         status = new Status(state, error);
+        if (listener != null) listener.notify(status, getProgress());
+
         try {
             src.close();
         } catch (IOException ignore) {}

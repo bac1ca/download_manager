@@ -9,7 +9,7 @@ import java.io.InputStream;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import com.dm.lib.DJobBase.State;
+import com.dm.lib.Download.State;
 
 import static org.junit.Assert.*;
 
@@ -33,7 +33,7 @@ public class TestDJobMocked {
 
         ExecutorService executor = Executors.newFixedThreadPool(4);
         try {
-            DJobBase djob = new DJobBase(src, dst, -1, executor);
+            SingleLoadBase djob = new SingleLoadBase(src, dst, -1, executor);
             while (djob.process()) {}
 
             State state = djob.getStatus().getState();
@@ -55,7 +55,7 @@ public class TestDJobMocked {
 
         ExecutorService executor = Executors.newSingleThreadExecutor();
         try {
-            DJobBase job = new DJobBase(src, dst, -1, executor);
+            SingleLoadBase job = new SingleLoadBase(src, dst, -1, executor);
             assertEquals(State.INPROGRESS, job.getStatus().getState());
 
             assertTrue(job.process());

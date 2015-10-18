@@ -6,20 +6,21 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.concurrent.Callable;
 
-public class DTask implements Callable<Integer> {
+class DownloadTask implements Callable<Integer> {
 
     private final InputStream src;
     private final FileChannel dst;
 
     private final ThreadLocal<byte[]> dataTL;
-//    private final static int DEFAULT_BUFFER_SIZE = 1024 * 4; // 4Kb TODO
-    private final static int DEFAULT_BUFFER_SIZE = 16 * 1024 * 1024; // 4Kb TODO
+    private static final int DEFAULT_BUFFER_SIZE = Integer.parseInt(
+        System.getProperty(DownloadManager.BUFFER_SIZE_PROP, "1048576"));
 
-    public DTask(InputStream src, FileChannel dst) {
+
+    DownloadTask(InputStream src, FileChannel dst) {
         this(src, dst, DEFAULT_BUFFER_SIZE);
     }
 
-    public DTask(InputStream src, FileChannel dst, int buffSize) {
+    DownloadTask(InputStream src, FileChannel dst, int buffSize) {
         this.src = src;
         this.dst = dst;
 
@@ -31,7 +32,6 @@ public class DTask implements Callable<Integer> {
         };
     }
 
-
     public Integer call() {
         try {
             byte[] data = dataTL.get();
@@ -41,12 +41,6 @@ public class DTask implements Callable<Integer> {
                 dst.write(buf);
             }
             return numRead;
-
-            // TODO Progress Granularity
-//            while(((numRead = src.read(data, 0, data.length)) != -1)) {
-//                final ByteBuffer buf = ByteBuffer.wrap(data, 0, numRead);
-//                dst.write(buf);
-//            }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
