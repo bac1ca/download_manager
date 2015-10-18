@@ -13,7 +13,7 @@ public class DTask implements Callable<Integer> {
 
     private final ThreadLocal<byte[]> dataTL;
 //    private final static int DEFAULT_BUFFER_SIZE = 1024 * 4; // 4Kb TODO
-    private final static int DEFAULT_BUFFER_SIZE = 4 * 1024; // 4Kb TODO
+    private final static int DEFAULT_BUFFER_SIZE = 16 * 1024 * 1024; // 4Kb TODO
 
     public DTask(InputStream src, FileChannel dst) {
         this(src, dst, DEFAULT_BUFFER_SIZE);

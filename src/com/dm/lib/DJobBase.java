@@ -13,7 +13,7 @@ public class DJobBase {
     private final long contentLen;
     private final ExecutorService executor;
 
-    private long progress = 0;
+    private volatile long progress = 0;
     private volatile boolean isTerminated = false;
     private volatile Status status = new Status(State.INPROGRESS, null);
 
@@ -78,10 +78,23 @@ public class DJobBase {
         public Exception getError() {
             return error;
         }
+
+        @Override
+        public String toString() {
+            String res = state.toString();
+            if (error != null) {
+                res += error.getMessage();
+            }
+            return res;
+        }
     }
 
     public Status getStatus() {
         return status;
+    }
+
+    public long getContentLen() {
+        return contentLen;
     }
 
     /**
@@ -97,9 +110,14 @@ public class DJobBase {
         finish(State.CANCELED, null);
     }
 
-    public Status waitForFinish() {
-        // TODO
-        return null;
+    private Object lock = new Object();
+    public Status waitForFinish() throws InterruptedException {
+        synchronized (lock) {
+            while(status.getState() == State.INPROGRESS) {
+                lock.wait();
+            }
+        }
+        return status;
     }
 
     public interface StatusListener {
@@ -120,5 +138,8 @@ public class DJobBase {
         try {
             dst.close();
         } catch (IOException ignore) {}
+        synchronized (lock) {
+            lock.notifyAll();
+        }
     }
 }

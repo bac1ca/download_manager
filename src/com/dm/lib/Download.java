@@ -12,35 +12,40 @@ import com.dm.lib.DJobBase.StatusListener;
 import com.dm.lib.DJobBase.Status;
 
 public class Download {
-
-    private final HttpURLConnection con;
-    private final Path dst;
-
-    private final DJob task;
-//    private List<DJob> tasks = new ArrayList<>();
-
     private static final int CONNECTION_TIMEOUT = 5_000;
 
-    Download(URL url, Path dst, ExecutorService executor) throws IOException {
-        con = (HttpURLConnection) url.openConnection();
+    private final URL url;
+    private final Path dst;
+    private final ExecutorService executor;
+
+    private DJob task;
+    private int code;
+
+    Download(URL url, Path dst, ExecutorService executor) {
+        this.url = url;
+        this.dst = dst;
+        this.executor = executor;
+    }
+
+    void start() throws IOException {
+        HttpURLConnection con = (HttpURLConnection) url.openConnection();
         con.setConnectTimeout(CONNECTION_TIMEOUT);
         con.connect();
 
-        String field = con.getHeaderField("Accept-Ranges");
-        System.out.println("f: " + field);
+        code = con.getResponseCode();
 
-        int code = con.getResponseCode();
-        System.out.println("code = " + code);
-
+//        if (code == HttpURLConnection.HTTP_PARTIAL) {
+//            // TODO multiple connections for one file is available
+//        }
 
         final InputStream src = new BufferedInputStream(con.getInputStream());
         final long contentLen = con.getContentLengthLong();
-        this.dst = dst;
         task = new DJob(src, dst, contentLen, executor);
     }
 
+
     public URL getSource() {
-        return con.getURL();
+        return url;
     }
 
     public Path getDestination() {
@@ -52,14 +57,22 @@ public class Download {
     }
 
     public long getContentLen() {
-        return -1;  // TODO
+        return task.getContentLen();
+    }
+
+    public int getHttpResponseCode() {
+        return code;
+    }
+
+    public Status getStatus() {
+        return task.getStatus();
     }
 
     public void cancel() {
         task.cancel();
     }
 
-    public Status waitForFinish() {
+    public Status waitForFinish() throws InterruptedException {
         return task.waitForFinish();
     }
 
@@ -71,4 +84,9 @@ public class Download {
         return task.process();
     }
 
+    @Override
+    public String toString() {
+        return "source: " + getSource() + ", destination: " + dst +
+               ", status: " + getStatus();
+    }
 }
