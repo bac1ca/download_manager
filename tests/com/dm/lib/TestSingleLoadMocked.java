@@ -13,7 +13,7 @@ import com.dm.lib.Download.State;
 
 import static org.junit.Assert.*;
 
-public class TestDJobMocked {
+public class TestSingleLoadMocked {
 
     @org.junit.Test
     public void testDownloadTask() throws Exception {

@@ -11,6 +11,11 @@ import com.dm.lib.Download.State;
 import com.dm.lib.Download.Status;
 import com.dm.lib.Download.StatusListener;
 
+/**
+ * Single connection task
+ * This class is very convenient for mock testing
+ * Please check SingleLoad class
+ */
 class SingleLoadBase {
     private final InputStream src;
     private final FileChannel dst;
@@ -33,7 +38,11 @@ class SingleLoadBase {
     }
 
     private Future<Integer> future;
-
+    /**
+     * Internal method, which is called by "process" thread
+     * @return false if download task is finished,
+     *         true otherwise
+     */
     boolean process() {
         if (isTerminated) {
             return false;
@@ -74,12 +83,17 @@ class SingleLoadBase {
         return (double) progress / contentLen;
     }
 
+    /**
+     * @see Download#cancel()
+     */
     public void cancel() {
         isTerminated = true;
         finish(State.CANCELED, null);
     }
 
-    private Object lock = new Object();
+    /**
+     * @see Download#waitForFinish()
+     */
     public Status waitForFinish() throws InterruptedException {
         synchronized (lock) {
             while(status.getState() == State.INPROGRESS) {
@@ -88,14 +102,23 @@ class SingleLoadBase {
         }
         return status;
     }
+    private Object lock = new Object();
 
 
-    private volatile StatusListener listener;
-
+    /**
+     * @see Download#setStatusListener(StatusListener)
+     */
     public void setStatusListener(StatusListener listener) {
         this.listener = listener;
     }
+    private volatile StatusListener listener;
 
+
+    /**
+     * This method is calling in case of finishing task
+     * @param state
+     * @param error
+     */
     protected void finish(State state, Exception error) {
         status = new Status(state, error);
         if (listener != null) listener.notify(status, getProgress());

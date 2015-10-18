@@ -6,6 +6,9 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.concurrent.Callable;
 
+/**
+ * Download task for running in the ExecutorService
+ */
 class DownloadTask implements Callable<Integer> {
 
     private final InputStream src;
@@ -14,7 +17,6 @@ class DownloadTask implements Callable<Integer> {
     private final ThreadLocal<byte[]> dataTL;
     private static final int DEFAULT_BUFFER_SIZE = Integer.parseInt(
         System.getProperty(DownloadManager.BUFFER_SIZE_PROP, "1048576"));
-
 
     DownloadTask(InputStream src, FileChannel dst) {
         this(src, dst, DEFAULT_BUFFER_SIZE);

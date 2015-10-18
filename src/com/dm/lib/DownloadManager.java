@@ -9,6 +9,12 @@ import java.util.List;
 import java.util.concurrent.*;
 
 
+/**
+ * This class represents DownloadManager entity, which can be run and stopped (soft
+ * and hard). Also we can create {@see Download} objects using {@see download}
+ * method. It provides list with running "Download" tasks and list of already
+ * finished tasks.
+ */
 public class DownloadManager {
 
     public static final String BUFFER_SIZE_PROP = "buffer.size.property";
@@ -26,32 +32,74 @@ public class DownloadManager {
         this(Runtime.getRuntime().availableProcessors());
     }
 
+    /**
+     * Creates DownloadManager with fixed number of worker threads,
+     * the minimum number is 1, the maximum number is 256,
+     * @param poolSize the number of worker threads
+     * @throws IllegalArgumentException if pool-size is out of range [1, 256]
+     */
     public DownloadManager(int poolSize) {
+        if (poolSize < 1 || poolSize > 256) {
+            throw new IllegalArgumentException("pool size < 1");
+        }
         executor = Executors.newFixedThreadPool(poolSize);
         processThread = new Thread(processCycle);
     }
 
+    /**
+     * Runs DownloadManager,
+     * e.g. starts "process" thread
+     */
     public void start() {
         processThread.start();
     }
 
+    /**
+     * Returns current number of worker threads
+     * @return current number of worker threads
+     */
     public int getPoolSize() {
         return ((ThreadPoolExecutor) executor).getCorePoolSize();
     }
 
-    public void setPoolSize(int amount) {
-        ((ThreadPoolExecutor) executor).setCorePoolSize(amount);
-        ((ThreadPoolExecutor) executor).setMaximumPoolSize(amount);
+    /**
+     * Sets the number of worker threads,
+     * the minimum number is 1, the maximum number is 256,
+     * this method overrides the initial number of threads
+     * @param poolSize the number of worker threads
+     * @throws IllegalArgumentException if pool-size is out of range [1, 256]
+     */
+    public void setPoolSize(int poolSize) {
+        if (poolSize < 1 || poolSize > 256) {
+            throw new IllegalArgumentException("pool size < 1");
+        }
+        ((ThreadPoolExecutor) executor).setCorePoolSize(poolSize);
+        ((ThreadPoolExecutor) executor).setMaximumPoolSize(poolSize);
     }
 
+    /**
+     * Returns list of active download tasks
+     * @return list of active download tasks
+     */
     public List<Download> activeDownloads() {
         return new ArrayList<>(active);
     }
 
+    /**
+     * Returns list of finished download tasks
+     * @return list of finished download tasks
+     */
     public List<Download> finishedDownloads() {
         return new ArrayList<>(finished);
     }
 
+    /**
+     * Creates and run new {@see Download} tasks
+     * @param src the source URL
+     * @param dst the destination path
+     * @return Download object
+     * @throws IOException if any IO error occurs
+     */
     public Download download(URL src, Path dst) throws IOException {
         if (isClosed) {
             throw new IllegalStateException();
@@ -61,6 +109,11 @@ public class DownloadManager {
         return download;
     }
 
+    /**
+     * Graceful shutdown of DownloadManager,
+     * It blocks until all downloads are finished
+     * @throws InterruptedException
+     */
     public void close() throws InterruptedException {
         isClosed = true;
 
@@ -71,14 +124,18 @@ public class DownloadManager {
         executor.shutdown();
     }
 
+    /**
+     * Force close of DownloadManager,
+     * cancels all active tasks
+     */
     public void closeForce() {
         isClosed = true;
 
-        processThread.interrupt();
-        executor.shutdown();
         for (Download d : active) {
             d.cancel();
         }
+        processThread.interrupt();
+        executor.shutdown();
     }
 
     private Runnable processCycle = () -> {

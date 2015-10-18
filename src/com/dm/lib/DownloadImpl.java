@@ -16,6 +16,12 @@ public class DownloadImpl implements Download {
     private static final int CONNECTION_TIMEOUT = Integer.parseInt(
             System.getProperty(DownloadManager.CONNECTION_TIMEOUT_PROP, "5000"));
 
+    /**
+     * @param url the source url
+     * @param dst destination path
+     * @param executor ExecutorService
+     * @throws IOException if any IO error occurs
+     */
     DownloadImpl(URL url, Path dst, ExecutorService executor)
         throws IOException {
 
@@ -28,7 +34,7 @@ public class DownloadImpl implements Download {
 
         final int code = con.getResponseCode();
         System.out.println("info: responseCode - " + code);
-        //if (code == HttpURLConnection.HTTP_PARTIAL) { // TODO Multi-connection
+        //if (code == HttpURLConnection.HTTP_PARTIAL) { // TODO TBD Multi-connection
 
         final InputStream src = new BufferedInputStream(con.getInputStream());
         final long contentLen = con.getContentLengthLong();
