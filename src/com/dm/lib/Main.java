@@ -19,11 +19,11 @@ public class Main {
 
     public static void main(String[] args) {
         // for tests only
-        args = new String [] {
-                "http://localhost:8000/file1.pdf",
-                "http://localhost:8001/file2.pdf",
-                "./downloads/"
-        };
+//        args = new String [] {
+//                "http://localhost:8000/file1.pdf",
+//                "http://localhost:8001/file2.pdf",
+//                "./downloads/"
+//        };
 
         DownloadManager dm = new DownloadManager();
         try {
