@@ -30,14 +30,21 @@ public class TestDownloadTaskMocked {
         FileChannelMock dst = new FileChannelPosMock(data.length);
 
         final int bufSize = 6;
-        final DownloadTask task = new DownloadTask(src, dst, bufSize);
-        int readBytes = task.call();
-        assertEquals(bufSize, readBytes);
+        final byte[] initBuff = DownloadTask.dataTL.get();
 
-        for (int i = 0; i < bufSize; i++) {
-            assertEquals(data[i], dst.data()[i]);
+        try {
+            DownloadTask.dataTL.set(new byte[bufSize]);
+            final DownloadTask task = new DownloadTask(src, dst);
+            int readBytes = task.call();
+            assertEquals(bufSize, readBytes);
+
+            for (int i = 0; i < bufSize; i++) {
+                assertEquals(data[i], dst.data()[i]);
+            }
+            System.out.println(dst);
+        } finally {
+            DownloadTask.dataTL.set(initBuff);
         }
-        System.out.println(dst);
     }
 
 }
